@@ -1,4 +1,4 @@
-package Clases; // Asegúrate de que coincida con tu paquete
+package Clases;
 
 import java.util.ArrayList;
 
@@ -82,5 +82,17 @@ public class Biblioteca {
             }
         }
         System.out.println("-----------------------------------\n");
+    }
+
+    // --- 7. ELIMINAR LIBRO (Nuevo) ---
+    public void eliminarLibro(int id) {
+        Libro libro = buscarLibro(id);
+
+        if (libro == null) {
+            System.out.println("Error: No se puede eliminar. El libro con ID " + id + " no existe.");
+        } else {
+            catalogo.remove(libro); // El método .remove() borra el objeto de la lista
+            System.out.println("El libro '" + libro.getTitulo() + "' ha sido eliminado del catálogo permanentemente.");
+        }
     }
 }
