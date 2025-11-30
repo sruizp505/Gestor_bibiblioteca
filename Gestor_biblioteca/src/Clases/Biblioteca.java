@@ -1,6 +1,8 @@
 package Clases;
 
 import java.util.ArrayList;
+import java.sql.*;
+
 
 public class Biblioteca {
 
@@ -12,8 +14,27 @@ public class Biblioteca {
 
     // --- 1. REGISTRAR (Sin cambios, recibe el objeto ya creado) ---
     public void registrarLibro(Libro nuevoLibro) {
-        catalogo.add(nuevoLibro);
-        System.out.println("Libro registrado con ID " + nuevoLibro.getId() + ": " + nuevoLibro.getTitulo());
+        // 1. La orden SQL (los ? son espacios para llenar)
+        String sql = "INSERT INTO libros (id, titulo, autor, editora, disponible) VALUES (?, ?, ?, ?, ?)";
+
+        // 2. Conectamos y preparamos la orden
+        try (Connection conn = Conexion.conectar();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            // 3. Rellenamos los huecos (?) con los datos del objeto
+            stmt.setInt(1, nuevoLibro.getId());
+            stmt.setString(2, nuevoLibro.getTitulo());
+            stmt.setString(3, nuevoLibro.getAutor());
+            stmt.setString(4, nuevoLibro.getEditora());
+            stmt.setBoolean(5, nuevoLibro.isDisponible());
+
+            // 4. ¡Ejecutar!
+            stmt.executeUpdate();
+            System.out.println(" ¡Libro guardado en la Base de Datos!");
+
+        } catch (SQLException e) {
+            System.out.println(" Error al guardar: " + e.getMessage());
+        }
     }
 
     // --- 2. BUSCAR POR ID (Nuevo y Recomendado) ---
@@ -71,28 +92,62 @@ public class Biblioteca {
     }
 
     // --- 6. MOSTRAR CATÁLOGO ---
+
+    // --- MÉTODO ACTUALIZADO: LEER DESDE MYSQL ---
     public void mostrarCatalogo() {
-        System.out.println("\n--- INVENTARIO DE LA BIBLIOTECA ---");
-        if (catalogo.isEmpty()) {
-            System.out.println("(Vacío)");
-        } else {
-            for (Libro libro : catalogo) {
-                // Esto usará automáticamente tu nuevo toString() con editora e ID
-                System.out.println(libro);
+        String sql = "SELECT * FROM libros";
+
+        // Usamos Statement (no PreparedStatement) porque no hay parámetros (?) esta vez
+        try (Connection conn = Conexion.conectar();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            System.out.println("\n---  CATÁLOGO REAL (DESDE MYSQL) ---");
+
+            // Recorremos la tabla fila por fila
+            while (rs.next()) {
+                // 1. Extraemos los datos de la fila actual
+                int id = rs.getInt("id");
+                String titulo = rs.getString("titulo");
+                String autor = rs.getString("autor");
+                String editora = rs.getString("editora");
+                boolean disponible = rs.getBoolean("disponible");
+
+                // 2. Reconstruimos el objeto Libro temporalmente para imprimirlo bonito
+                Libro libroTemp = new Libro(titulo, autor, editora, id);
+                libroTemp.setDisponible(disponible);
+
+                // 3. Imprimimos usando tu toString()
+                System.out.println(libroTemp);
             }
+            System.out.println("--------------------------------------\n");
+
+        } catch (SQLException e) {
+            System.out.println(" Error al consultar el catálogo: " + e.getMessage());
         }
-        System.out.println("-----------------------------------\n");
     }
 
-    // --- 7. ELIMINAR LIBRO (Nuevo) ---
+    // --- 7. ELIMINAR LIBRO ---
     public void eliminarLibro(int id) {
-        Libro libro = buscarLibro(id);
+        String sql = "DELETE FROM libros WHERE id = ?";
 
-        if (libro == null) {
-            System.out.println("Error: No se puede eliminar. El libro con ID " + id + " no existe.");
-        } else {
-            catalogo.remove(libro); // El método .remove() borra el objeto de la lista
-            System.out.println("El libro '" + libro.getTitulo() + "' ha sido eliminado del catálogo permanentemente.");
+        try (Connection conn = Conexion.conectar();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            // 1. Preparamos el ID que queremos borrar
+            stmt.setInt(1, id);
+
+            // 2. Ejecutamos y vemos cuántas filas se borraron
+            int filasAfectadas = stmt.executeUpdate();
+
+            if (filasAfectadas > 0) {
+                System.out.println(" El libro con ID " + id + " fue eliminado de la Base de Datos.");
+            } else {
+                System.out.println(" No se encontró ningún libro con el ID " + id + ".");
+            }
+
+        } catch (SQLException e) {
+            System.out.println(" Error al eliminar: " + e.getMessage());
         }
     }
 }
