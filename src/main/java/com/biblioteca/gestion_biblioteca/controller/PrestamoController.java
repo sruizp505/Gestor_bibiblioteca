@@ -45,4 +45,16 @@ public class PrestamoController {
         public Long getUsuarioId() { return usuarioId; }
         public void setUsuarioId(Long usuarioId) { this.usuarioId = usuarioId; }
     }
+
+    // --- PUT: Devolver un libro ---
+    // URL: /api/prestamos/devolver/5 (donde 5 es el ID del libro)
+    @PutMapping("/devolver/{libroId}")
+    public ResponseEntity<?> devolverLibro(@PathVariable Long libroId) {
+        try {
+            prestamoService.registrarDevolucion(libroId);
+            return ResponseEntity.ok("Libro devuelto con éxito");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }
