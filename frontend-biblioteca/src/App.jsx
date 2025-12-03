@@ -4,7 +4,7 @@ import './App.css'
 function App() {
     // --- CONFIGURACIÓN "NUBE VS LOCAL" ---
     // Si existe una variable de entorno (Nube), úsala. Si no, usa localhost.
-    const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8080";
+    const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || "https://api-biblioteca-4r8h.onrender.com";
 
     const [libros, setLibros] = useState([])
     const [usuarios, setUsuarios] = useState([])
