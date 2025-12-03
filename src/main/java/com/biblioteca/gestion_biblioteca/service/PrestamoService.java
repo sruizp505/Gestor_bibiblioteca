@@ -56,4 +56,27 @@ public class PrestamoService {
     public List<Prestamo> listarTodos() {
         return prestamoRepository.findAll();
     }
+
+    // --- MAGIA: REGISTRAR DEVOLUCIÓN ---
+    @Transactional
+    public void registrarDevolucion(Long libroId) {
+        // 1. Buscar el préstamo activo de este libro (el que no tiene fecha de devolución)
+        List<Prestamo> prestamosActivos = prestamoRepository.findByLibroIdAndFechaDevolucionIsNull(libroId);
+
+        if (prestamosActivos.isEmpty()) {
+            throw new RuntimeException("No hay préstamos activos para este libro");
+        }
+
+        // Asumimos que solo hay uno activo. Tomamos el primero.
+        Prestamo prestamo = prestamosActivos.get(0);
+
+        // 2. Cerrar el préstamo (Poner fecha de hoy)
+        prestamo.setFechaDevolucion(LocalDate.now());
+        prestamoRepository.save(prestamo);
+
+        // 3. Liberar el libro
+        Libro libro = prestamo.getLibro();
+        libro.setDisponible(true);
+        libroRepository.save(libro);
+    }
 }
